@@ -586,6 +586,7 @@ class _BottomPickerLayout extends SingleChildLayoutDelegate {
     if (showTitleActions == true) {
       maxHeight += theme.titleHeight;
     }
+    maxHeight += theme.tipsHeight;
 
     return BoxConstraints(
       minWidth: constraints.maxWidth,
