@@ -28,6 +28,7 @@ class DatePicker {
     DateInitTime? dateInitTime,
     bool? showTime,
     bool? showLunarYear,
+    Widget? tips,
   }) async {
     return await Navigator.push(
       context,
@@ -39,10 +40,10 @@ class DatePicker {
         theme: theme,
         lunarPicker: lunarPicker,
         dateInitTime: dateInitTime,
-        barrierLabel:
-            MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
         showTime: showTime,
         showLunarYear: showLunarYear,
+        tips: tips,
       ),
     );
   }
@@ -60,6 +61,7 @@ class _DatePickerRoute<T> extends PopupRoute<T> {
     this.barrierLabel,
     this.showTime,
     this.showLunarYear,
+    this.tips,
     RouteSettings? settings,
   })  : theme = theme ?? const picker_theme.DatePickerTheme(),
         super(settings: settings);
@@ -73,6 +75,7 @@ class _DatePickerRoute<T> extends PopupRoute<T> {
   final DateInitTime? dateInitTime;
   final bool? showTime;
   final bool? showLunarYear;
+  final Widget? tips;
 
   @override
   Duration get transitionDuration => const Duration(milliseconds: 200);
@@ -91,14 +94,12 @@ class _DatePickerRoute<T> extends PopupRoute<T> {
   @override
   AnimationController createAnimationController() {
     assert(_animationController == null);
-    _animationController =
-        BottomSheet.createAnimationController(navigator!.overlay!);
+    _animationController = BottomSheet.createAnimationController(navigator!.overlay!);
     return _animationController!;
   }
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation) {
+  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
     Widget bottomSheet = MediaQuery.removePadding(
       context: context,
       removeTop: true,
@@ -108,7 +109,8 @@ class _DatePickerRoute<T> extends PopupRoute<T> {
         lunarPicker: lunarPicker ?? false,
         dateInitTime: dateInitTime,
         showTime: showTime,
-        showLunarYear:showLunarYear ?? false,
+        showLunarYear: showLunarYear ?? false,
+        tips: tips,
       ),
     );
     return InheritedTheme.captureAll(context, bottomSheet);
@@ -124,6 +126,7 @@ class _DatePickerComponent extends StatefulWidget {
     required this.dateInitTime,
     required this.showTime,
     required this.showLunarYear,
+    this.tips,
   }) : super(key: key);
 
   final DateChangedCallback? onChanged;
@@ -138,6 +141,8 @@ class _DatePickerComponent extends StatefulWidget {
 
   final bool? showLunarYear;
 
+  final Widget? tips;
+
   @override
   State<StatefulWidget> createState() {
     return _DatePickerState();
@@ -145,11 +150,7 @@ class _DatePickerComponent extends StatefulWidget {
 }
 
 class _DatePickerState extends State<_DatePickerComponent> {
-  late FixedExtentScrollController leftScrollCtrl,
-      middleScrollCtrl,
-      rightScrollCtrl,
-      hourScrollCtrl,
-      minuteScrollCtrl;
+  late FixedExtentScrollController leftScrollCtrl, middleScrollCtrl, rightScrollCtrl, hourScrollCtrl, minuteScrollCtrl;
 
   bool lunarPicker = false;
 
@@ -162,10 +163,11 @@ class _DatePickerState extends State<_DatePickerComponent> {
     lunarPicker = widget.lunarPicker;
     if (lunarPicker) {
       pickerModel = LunarPickerModel(
-          currentTime: widget.dateInitTime?.currentTime,
-          maxTime: widget.dateInitTime?.maxTime,
-          minTime: widget.dateInitTime?.minTime,
-          showLunarYear: widget.showLunarYear,);
+        currentTime: widget.dateInitTime?.currentTime,
+        maxTime: widget.dateInitTime?.maxTime,
+        minTime: widget.dateInitTime?.minTime,
+        showLunarYear: widget.showLunarYear,
+      );
     } else {
       pickerModel = DatePickerModel(
           currentTime: widget.dateInitTime?.currentTime,
@@ -196,16 +198,11 @@ class _DatePickerState extends State<_DatePickerComponent> {
 
   void refreshScrollOffset() {
     // debugPrint('refreshScrollOffset ${pickerModel.currentMiddleIndex()}');
-    leftScrollCtrl = FixedExtentScrollController(
-        initialItem: pickerModel.currentLeftIndex());
-    middleScrollCtrl = FixedExtentScrollController(
-        initialItem: pickerModel.currentMiddleIndex());
-    rightScrollCtrl = FixedExtentScrollController(
-        initialItem: pickerModel.currentRightIndex());
-    hourScrollCtrl = FixedExtentScrollController(
-        initialItem: pickerModel.currentHourIndex());
-    minuteScrollCtrl = FixedExtentScrollController(
-        initialItem: pickerModel.currentMinuteIndex());
+    leftScrollCtrl = FixedExtentScrollController(initialItem: pickerModel.currentLeftIndex());
+    middleScrollCtrl = FixedExtentScrollController(initialItem: pickerModel.currentMiddleIndex());
+    rightScrollCtrl = FixedExtentScrollController(initialItem: pickerModel.currentRightIndex());
+    hourScrollCtrl = FixedExtentScrollController(initialItem: pickerModel.currentHourIndex());
+    minuteScrollCtrl = FixedExtentScrollController(initialItem: pickerModel.currentMinuteIndex());
   }
 
   @override
@@ -237,6 +234,11 @@ class _DatePickerState extends State<_DatePickerComponent> {
               child: GestureDetector(
                 child: Material(
                   color: theme.backgroundColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(26),
+                    topRight: Radius.circular(26),
+                  ),
+                  clipBehavior: Clip.hardEdge,
                   child: _renderPickerView(theme),
                 ),
               ),
@@ -254,15 +256,22 @@ class _DatePickerState extends State<_DatePickerComponent> {
   }
 
   Widget _renderPickerView(picker_theme.DatePickerTheme theme) {
+    final List<Widget> list = [];
+
     Widget itemView = _renderItemView(theme);
     if (widget.route.showTitleActions == true) {
-      return Column(
-        children: <Widget>[
-          _renderTitleActionsView(theme),
-          itemView,
-        ],
-      );
+      list.add(_renderTitleActionsView(theme));
     }
+
+    if (widget.tips != null) {
+      list.add(widget.tips!);
+    }
+
+    if (list.isNotEmpty) {
+      list.add(itemView);
+      return Column(children: list);
+    }
+
     return itemView;
   }
 
@@ -286,8 +295,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
             if (notification.depth == 0 &&
                 notification is ScrollEndNotification &&
                 notification.metrics is FixedExtentMetrics) {
-              final FixedExtentMetrics metrics =
-                  notification.metrics as FixedExtentMetrics;
+              final FixedExtentMetrics metrics = notification.metrics as FixedExtentMetrics;
               final int currentItemIndex = metrics.itemIndex;
               selectedChangedWhenScrollEnd(currentItemIndex);
             }
@@ -339,14 +347,17 @@ class _DatePickerState extends State<_DatePickerComponent> {
                       theme,
                       pickerModel.leftStringAtIndex,
                       leftScrollCtrl,
-                      pickerModel.layoutProportions()[0], (index) {
-                      pickerModel.setLeftIndex(index);
-                    }, (index) {
-                      setState(() {
-                        refreshScrollOffset();
-                        _notifyDateChanged();
-                      });
-                    })
+                      pickerModel.layoutProportions()[0],
+                      (index) {
+                        pickerModel.setLeftIndex(index);
+                      },
+                      (index) {
+                        setState(() {
+                          refreshScrollOffset();
+                          _notifyDateChanged();
+                        });
+                      },
+                    )
                   : null,
             ),
             Text(
@@ -357,8 +368,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
             Container(
               child: pickerModel.layoutProportions()[1] > 0
                   ? _renderColumnView(
-                      ValueKey(pickerModel.currentLeftIndex() * 100 +
-                          pickerModel.currentMiddleIndex()),
+                      ValueKey(pickerModel.currentLeftIndex() * 100 + pickerModel.currentMiddleIndex()),
                       theme,
                       pickerModel.middleStringAtIndex,
                       middleScrollCtrl,
@@ -381,8 +391,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
             Container(
               child: pickerModel.layoutProportions()[2] > 0
                   ? _renderColumnView(
-                      ValueKey(pickerModel.currentMiddleIndex() * 100 +
-                          pickerModel.currentLeftIndex()),
+                      ValueKey(pickerModel.currentMiddleIndex() * 100 + pickerModel.currentLeftIndex()),
                       theme,
                       pickerModel.rightStringAtIndex,
                       rightScrollCtrl,
@@ -405,8 +414,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
               Container(
                 child: pickerModel.layoutProportions()[3] > 0
                     ? _renderColumnView(
-                        ValueKey(pickerModel.currentMinuteIndex() * 200 +
-                            pickerModel.currentHourIndex()),
+                        ValueKey(pickerModel.currentMinuteIndex() * 200 + pickerModel.currentHourIndex()),
                         theme,
                         pickerModel.hourStringAtIndex,
                         hourScrollCtrl,
@@ -429,8 +437,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
               Container(
                 child: pickerModel.layoutProportions()[4] > 0
                     ? _renderColumnView(
-                        ValueKey(pickerModel.currentMinuteIndex() * 100 +
-                            pickerModel.currentHourIndex()),
+                        ValueKey(pickerModel.currentMinuteIndex() * 100 + pickerModel.currentHourIndex()),
                         theme,
                         pickerModel.minuteStringAtIndex,
                         minuteScrollCtrl,
@@ -467,7 +474,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
             height: theme.titleHeight,
             child: CupertinoButton(
               pressedOpacity: 0.3,
-              padding: const EdgeInsetsDirectional.only(start: 16, top: 0),
+              padding: const EdgeInsetsDirectional.only(start: 20, top: 0),
               child: Text(
                 cancel,
                 style: theme.cancelStyle,
@@ -481,9 +488,19 @@ class _DatePickerState extends State<_DatePickerComponent> {
             ),
           ),
           Container(
+            padding: EdgeInsets.all(2),
             decoration: BoxDecoration(
-              border: Border.all(width: 1, color: theme.doneStyle.color!),
-              borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+              color: theme.backgroundColor,
+              border: Border.all(width: 1, color: Color(0xffeeeeee)),
+              borderRadius: const BorderRadius.all(Radius.circular(33.0)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x1a000000),
+                  offset: Offset(1, 1), //阴影xy轴偏移量
+                  blurRadius: 20, //阴影模糊程度
+                  spreadRadius: .1, //阴影扩散程度
+                )
+              ],
             ),
             child: Row(
               children: [
@@ -492,25 +509,18 @@ class _DatePickerState extends State<_DatePickerComponent> {
                     onLunarChange(false);
                   },
                   style: ButtonStyle(
-                      shape: MaterialStateProperty.all(
-                          const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(7),
-                          bottomLeft: Radius.circular(7),
-                        ),
+                      shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+                        borderRadius: const BorderRadius.all(Radius.circular(29.0)),
                       )),
                       padding: MaterialStateProperty.all(EdgeInsets.zero),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize:
-                          MaterialStateProperty.all(const Size(50, 26)),
+                      minimumSize: MaterialStateProperty.all(const Size(58, 29)),
                       backgroundColor: lunarPicker
                           ? MaterialStateProperty.all(Colors.transparent)
                           : MaterialStateProperty.all(theme.doneStyle.color)),
                   child: Text(
                     "公历",
-                    style: TextStyle(
-                        color:
-                            lunarPicker ? theme.doneStyle.color : Colors.white),
+                    style: TextStyle(color: lunarPicker ? Color(0xff555555) : Colors.white),
                   ),
                 ),
                 TextButton(
@@ -519,22 +529,15 @@ class _DatePickerState extends State<_DatePickerComponent> {
                   },
                   style: ButtonStyle(
                       shape: MaterialStateProperty.all(const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(7),
-                          bottomRight: Radius.circular(7),
-                        ),)),
+                        borderRadius: const BorderRadius.all(Radius.circular(29.0)),
+                      )),
                       padding: MaterialStateProperty.all(EdgeInsets.zero),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize:
-                          MaterialStateProperty.all(const Size(50, 26)),
+                      minimumSize: MaterialStateProperty.all(const Size(58, 29)),
                       backgroundColor: lunarPicker
                           ? MaterialStateProperty.all(theme.doneStyle.color)
                           : MaterialStateProperty.all(Colors.transparent)),
-                  child: Text("阴历",
-                      style: TextStyle(
-                          color: lunarPicker
-                              ? Colors.white
-                              : theme.doneStyle.color)),
+                  child: Text("农历", style: TextStyle(color: lunarPicker ? Colors.white : Color(0xff555555))),
                 ),
               ],
             ),
@@ -543,7 +546,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
             height: theme.titleHeight,
             child: CupertinoButton(
               pressedOpacity: 0.3,
-              padding: const EdgeInsetsDirectional.only(end: 16, top: 0),
+              padding: const EdgeInsetsDirectional.only(end: 20, top: 0),
               child: Text(
                 done,
                 style: theme.doneStyle,
@@ -551,8 +554,7 @@ class _DatePickerState extends State<_DatePickerComponent> {
               onPressed: () {
                 Navigator.pop(context, pickerModel.finalTime());
                 if (widget.route.onConfirm != null) {
-                  widget.route.onConfirm!(
-                      pickerModel.finalTime()!, lunarPicker);
+                  widget.route.onConfirm!(pickerModel.finalTime()!, lunarPicker);
                 }
               },
             ),

@@ -132,7 +132,7 @@ class CommonPickerModel extends BasePickerModel {
 
   @override
   List<int> layoutProportions() {
-    return [3, 3, 3, 2, 2];
+    return [4, 3, 3, 2, 2];
   }
 
   @override
