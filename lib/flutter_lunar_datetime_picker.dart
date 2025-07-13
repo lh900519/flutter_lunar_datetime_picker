@@ -17,6 +17,7 @@ class DatePicker {
   static Future<DateTime?> showDatePicker(
     BuildContext context, {
     bool showTitleActions = true,
+    bool showTitleLunarAction = true,
     DateTime? minTime,
     DateTime? maxTime,
     DateChangedCallback? onChanged,
@@ -34,6 +35,7 @@ class DatePicker {
       context,
       _DatePickerRoute(
         showTitleActions: showTitleActions,
+        showTitleLunarAction: showTitleLunarAction,
         onChanged: onChanged,
         onConfirm: onConfirm,
         onCancel: onCancel,
@@ -52,6 +54,7 @@ class DatePicker {
 class _DatePickerRoute<T> extends PopupRoute<T> {
   _DatePickerRoute({
     this.showTitleActions,
+    this.showTitleLunarAction,
     this.onChanged,
     this.onConfirm,
     this.onCancel,
@@ -67,6 +70,7 @@ class _DatePickerRoute<T> extends PopupRoute<T> {
         super(settings: settings);
 
   final bool? showTitleActions;
+  final bool? showTitleLunarAction;
   final DateChangedCallback? onChanged;
   final DateChangedCallback? onConfirm;
   final DateCancelledCallback? onCancel;
@@ -487,61 +491,62 @@ class _DatePickerState extends State<_DatePickerComponent> {
               },
             ),
           ),
-          Container(
-            padding: EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: theme.backgroundColor,
-              border: Border.all(width: 1, color: Color(0xffeeeeee)),
-              borderRadius: const BorderRadius.all(Radius.circular(33.0)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1a000000),
-                  offset: Offset(1, 1), //阴影xy轴偏移量
-                  blurRadius: 20, //阴影模糊程度
-                  spreadRadius: .1, //阴影扩散程度
-                )
-              ],
-            ),
-            child: Row(
-              children: [
-                TextButton(
-                  onPressed: () {
-                    onLunarChange(false);
-                  },
-                  style: ButtonStyle(
-                      shape: MaterialStateProperty.all(const RoundedRectangleBorder(
-                        borderRadius: const BorderRadius.all(Radius.circular(29.0)),
-                      )),
-                      padding: MaterialStateProperty.all(EdgeInsets.zero),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: MaterialStateProperty.all(const Size(58, 29)),
-                      backgroundColor: lunarPicker
-                          ? MaterialStateProperty.all(Colors.transparent)
-                          : MaterialStateProperty.all(theme.doneStyle.color)),
-                  child: Text(
-                    "公历",
-                    style: TextStyle(color: lunarPicker ? Color(0xff555555) : Colors.white),
+          if (widget.route.showTitleLunarAction ?? true)
+            Container(
+              padding: EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: theme.backgroundColor,
+                border: Border.all(width: 1, color: Color(0xffeeeeee)),
+                borderRadius: const BorderRadius.all(Radius.circular(33.0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1a000000),
+                    offset: Offset(1, 1), //阴影xy轴偏移量
+                    blurRadius: 20, //阴影模糊程度
+                    spreadRadius: .1, //阴影扩散程度
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      onLunarChange(false);
+                    },
+                    style: ButtonStyle(
+                        shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+                          borderRadius: const BorderRadius.all(Radius.circular(29.0)),
+                        )),
+                        padding: MaterialStateProperty.all(EdgeInsets.zero),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: MaterialStateProperty.all(const Size(58, 29)),
+                        backgroundColor: lunarPicker
+                            ? MaterialStateProperty.all(Colors.transparent)
+                            : MaterialStateProperty.all(theme.doneStyle.color)),
+                    child: Text(
+                      "公历",
+                      style: TextStyle(color: lunarPicker ? Color(0xff555555) : Colors.white),
+                    ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    onLunarChange(true);
-                  },
-                  style: ButtonStyle(
-                      shape: MaterialStateProperty.all(const RoundedRectangleBorder(
-                        borderRadius: const BorderRadius.all(Radius.circular(29.0)),
-                      )),
-                      padding: MaterialStateProperty.all(EdgeInsets.zero),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      minimumSize: MaterialStateProperty.all(const Size(58, 29)),
-                      backgroundColor: lunarPicker
-                          ? MaterialStateProperty.all(theme.doneStyle.color)
-                          : MaterialStateProperty.all(Colors.transparent)),
-                  child: Text("农历", style: TextStyle(color: lunarPicker ? Colors.white : Color(0xff555555))),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () {
+                      onLunarChange(true);
+                    },
+                    style: ButtonStyle(
+                        shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+                          borderRadius: const BorderRadius.all(Radius.circular(29.0)),
+                        )),
+                        padding: MaterialStateProperty.all(EdgeInsets.zero),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        minimumSize: MaterialStateProperty.all(const Size(58, 29)),
+                        backgroundColor: lunarPicker
+                            ? MaterialStateProperty.all(theme.doneStyle.color)
+                            : MaterialStateProperty.all(Colors.transparent)),
+                    child: Text("农历", style: TextStyle(color: lunarPicker ? Colors.white : Color(0xff555555))),
+                  ),
+                ],
+              ),
             ),
-          ),
           SizedBox(
             height: theme.titleHeight,
             child: CupertinoButton(
